@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Pet Simulator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .pet-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ff6b6b;
+            margin-bottom: 20px;
+        }
+
+        .pet-display {
+            margin: 20px 0;
+        }
+
+        .pet-image {
+            font-size: 80px;
+            margin: 10px 0;
+        }
+
+        .stats {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .stat {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .meter {
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .happiness-meter {
+            background-color: #4CAF50;
+            height: 100%;
+        }
+
+        .hunger-meter {
+            background-color: #FF5722;
+            height: 100%;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        button {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #ff5252;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .messages {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 10px;
+            min-height: 100px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .messages p {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Animation for pet interactions */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .interaction-animation {
+            animation: bounce 0.5s;
+        }
+
+        /* Name input styling */
+        #name-input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 80%;
+            margin-bottom: 15px;
+        }
+
+        #start-btn {
+            background-color: #4CAF50;
+        }
+
+        #start-btn:hover {
+            background-color: #45a049;
+        }
+
+        .welcome-screen {
+            text-align: center;
+        }
+
+        .game-screen {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="pet-container">
+        <!-- Welcome Screen -->
+        <div class="welcome-screen" id="welcome-screen">
+            <h1>Virtual Pet Simulator</h1>
+            <div class="pet-image">🐶</div>
+            <p>What would you like to name your pet?</p>
+            <input type="text" id="name-input" placeholder="Enter pet name" maxlength="20">
+            <button id="start-btn">Start Game</button>
+        </div>
+
+        <!-- Game Screen (initially hidden) -->
+        <div class="game-screen" id="game-screen">
+            <h1>Virtual Pet Simulator</h1>
+            
+            <div class="pet-display">
+                <div class="pet-image" id="pet-mood">🐶</div>
+                <h2 id="pet-name">Pet Name</h2>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <label>Happiness:</label>
+                    <div class="meter">
+                        <div class="happiness-meter" id="happiness-meter" style="width: 50%;"></div>
+                    </div>
+                    <span id="happiness-value">50</span>%
+                </div>
+                <div class="stat">
+                    <label>Hunger:</label>
+                    <div class="meter">
+                        <div class="hunger-meter" id="hunger-meter" style="width: 50%;"></div>
+                    </div>
+                    <span id="hunger-value">50</span>%
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button id="feed-btn">Feed</button>
+                <button id="play-btn">Play</button>
+                <button id="update-btn">Pass Time</button>
+            </div>
+            
+            <div class="messages" id="messages"></div>
+        </div>
+    </div>
+
+    <script>
+        // Pet state
+        const pet = {
+            name: "",
+            happiness: 50,
+            hunger: 50,
+            mood: "neutral"
+        };
+
+        // Get DOM elements
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const nameInput = document.getElementById('name-input');
+        const startBtn = document.getElementById('start-btn');
+        const feedBtn = document.getElementById('feed-btn');
+        const playBtn = document.getElementById('play-btn');
+        const updateBtn = document.getElementById('update-btn');
+        const messagesDiv = document.getElementById('messages');
+        const happinessValue = document.getElementById('happiness-value');
+        const hungerValue = document.getElementById('hunger-value');
+        const happinessMeter = document.getElementById('happiness-meter');
+        const hungerMeter = document.getElementById('hunger-meter');
+        const petMood = document.getElementById('pet-mood');
+        const petName = document.getElementById('pet-name');
+
+        // Start game when user enters name
+        startBtn.addEventListener('click', () => {
+            const enteredName = nameInput.value.trim();
+            if (enteredName === "") {
+                alert("Please give your pet a name!");
+                return;
+            }
+            
+            pet.name = enteredName;
+            petName.textContent = pet.name;
+            
+            // Switch to game screen
+            welcomeScreen.style.display = "none";
+            gameScreen.style.display = "block";
+            
+            // Initialize display
+            updateDisplay();
+            addMessage(`Welcome to ${pet.name}'s virtual pet simulator!`);
+        });
+
+        // Update pet display based on mood
+        function updatePetMood() {
+            let emoji = '🐶';
+            if (pet.happiness > 70) {
+                pet.mood = "happy";
+                emoji = '😊';
+            } else if (pet.happiness > 30) {
+                pet.mood = "neutral";
+                emoji = '😐';
+            } else {
+                pet.mood = "sad";
+                emoji = '😢';
+            }
+            petMood.textContent = emoji;
+        }
+
+        // Function to add message to log
+        function addMessage(text) {
+            const message = document.createElement('p');
+            message.textContent = text;
+            messagesDiv.prepend(message);
+            if (messagesDiv.children.length > 5) {
+                messagesDiv.removeChild(messagesDiv.lastChild);
+            }
+        }
+
+        // Add animation to pet
+        function animatePet() {
+            petMood.classList.add('interaction-animation');
+            setTimeout(() => {
+                petMood.classList.remove('interaction-animation');
+            }, 500);
+        }
+
+        // Feed the pet
+        feedBtn.addEventListener('click', () => {
+            pet.hunger = Math.max(0, pet.hunger - 15);
+            pet.happiness = Math.max(0, pet.happiness - 5);
+            updateDisplay();
+            addMessage(`You fed ${pet.name}! Hunger decreased.`);
+            animatePet();
+        });
+
+        // Play with the pet
+        playBtn.addEventListener('click', () => {
+            pet.happiness = Math.min(100, pet.happiness + 15);
+            pet.hunger = Math.min(100, pet.hunger + 5);
+            updateDisplay();
+            addMessage(`You played with ${pet.name}! Happiness increased.`);
+            animatePet();
+        });
+
+        // Simulate time passing
+        updateBtn.addEventListener('click', () => {
+            pet.hunger = Math.min(100, pet.hunger + 5);
+            pet.happiness = Math.max(0, pet.happiness - 5);
+            updateDisplay();
+            addMessage(`Time passed... ${pet.name} is getting hungrier.`);
+        });
+
+        // Update all display elements
+        function updateDisplay() {
+            happinessValue.textContent = pet.happiness;
+            hungerValue.textContent = pet.hunger;
+            happinessMeter.style.width = `${pet.happiness}%`;
+            hungerMeter.style.width = `${pet.hunger}%`;
+            updatePetMood();
+            
+            // Check for game over
+            if (pet.hunger >= 100) {
+                addMessage(`GAME OVER! ${pet.name} starved to death!`);
+                disableButtons();
+            } else if (pet.happiness <= 0) {
+                addMessage(`GAME OVER! ${pet.name} ran away from sadness!`);
+                disableButtons();
+            }
+        }
+        
+        function disableButtons() {
+            feedBtn.disabled = true;
+            playBtn.disabled = true;
+            updateBtn.disabled = true;
+        }
+
+        // Focus on name input when page loads
+        nameInput.focus();
+        
+        // Allow pressing Enter to start game
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
